@@ -5,7 +5,7 @@ services:
     plan: starter
     region: oregon
     image:
-      url: ghcr.io/REPLACE_WITH_GITHUB_OWNER/abbeylodge-render-wp:latest
+      url: ghcr.io/nlisgo/abbeylodge-render-wp:latest
     healthCheckPath: /
     envVars:
       - key: APP_DATA_DIR
