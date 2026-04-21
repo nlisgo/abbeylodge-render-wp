@@ -171,8 +171,26 @@ prepare_wordpress_config() {
     exit 1
 }
 
+derive_wordpress_site_url() {
+    if [ -n "${WORDPRESS_SITE_URL:-}" ]; then
+        printf '%s\n' "${WORDPRESS_SITE_URL}"
+    elif [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
+        printf '%s\n' "${RENDER_EXTERNAL_URL}"
+    elif [ -n "${RENDER_EXTERNAL_HOSTNAME:-}" ]; then
+        printf 'https://%s\n' "${RENDER_EXTERNAL_HOSTNAME}"
+    else
+        printf 'http://127.0.0.1:%s\n' "${PORT}"
+    fi
+}
+
 resolve_wordpress_install_settings() {
-    : "${WORDPRESS_SITE_URL:=${RENDER_EXTERNAL_URL:-http://127.0.0.1:${PORT}}}"
+    if [ -n "${WORDPRESS_SITE_URL:-}" ]; then
+        WORDPRESS_SITE_URL_EXPLICIT=true
+    else
+        WORDPRESS_SITE_URL_EXPLICIT=false
+        WORDPRESS_SITE_URL="$(derive_wordpress_site_url)"
+    fi
+
     : "${WORDPRESS_SITE_TITLE:=${RENDER_SERVICE_NAME:-WordPress}}"
     : "${WORDPRESS_ADMIN_USER:=admin}"
 
@@ -198,11 +216,49 @@ resolve_wordpress_install_settings() {
     fi
 
     export WORDPRESS_SITE_URL
+    export WORDPRESS_SITE_URL_EXPLICIT
     export WORDPRESS_SITE_TITLE
     export WORDPRESS_ADMIN_USER
     export WORDPRESS_ADMIN_EMAIL
     export WORDPRESS_ADMIN_PASSWORD
     export ADMIN_PASSWORD_SOURCE
+}
+
+should_repair_wordpress_site_url() {
+    local current_url="$1"
+
+    if [ "${WORDPRESS_SITE_URL_EXPLICIT}" = true ]; then
+        [ "${current_url}" != "${WORDPRESS_SITE_URL}" ]
+        return
+    fi
+
+    case "${current_url}" in
+        ''|http://127.0.0.1*|https://127.0.0.1*|http://localhost*|https://localhost*|*:10000*|*:${PORT}*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+sync_wordpress_site_url() {
+    local current_home current_siteurl
+
+    if ! wp_cli core is-installed >/dev/null 2>&1; then
+        return
+    fi
+
+    resolve_wordpress_install_settings
+
+    current_home="$(wp_cli option get home 2>/dev/null || true)"
+    current_siteurl="$(wp_cli option get siteurl 2>/dev/null || true)"
+
+    if should_repair_wordpress_site_url "${current_home}" || should_repair_wordpress_site_url "${current_siteurl}"; then
+        log "Updating WordPress home/siteurl to ${WORDPRESS_SITE_URL}"
+        wp_cli option update home "${WORDPRESS_SITE_URL}"
+        wp_cli option update siteurl "${WORDPRESS_SITE_URL}"
+    fi
 }
 
 wp_cli() {
@@ -272,5 +328,6 @@ fi
 prepare_wordpress_core_files
 prepare_wordpress_config
 auto_install_wordpress
+sync_wordpress_site_url
 
 exec /usr/local/bin/docker-entrypoint.sh "$@"
