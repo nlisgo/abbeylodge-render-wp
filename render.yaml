@@ -1,0 +1,26 @@
+services:
+  - type: web
+    runtime: image
+    name: abbeylodge-wordpress
+    plan: starter
+    region: oregon
+    image:
+      url: ghcr.io/REPLACE_WITH_GITHUB_OWNER/abbeylodge-render-wp:latest
+    healthCheckPath: /
+    envVars:
+      - key: APP_DATA_DIR
+        value: /var/data
+      - key: MYSQL_DATABASE
+        value: wordpress
+      - key: MYSQL_USER
+        value: wordpress
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+      - key: WORDPRESS_DB_HOST
+        value: 127.0.0.1:3306
+    disk:
+      name: wordpress-data
+      mountPath: /var/data
+      sizeGB: 10
