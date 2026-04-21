@@ -5,6 +5,10 @@ log() {
     printf '[bootstrap] %s\n' "$*"
 }
 
+generate_password() {
+    php -r 'echo bin2hex(random_bytes(12));'
+}
+
 sql_string() {
     printf "%s" "$1" | sed "s/'/''/g"
 }
@@ -128,6 +132,103 @@ ${forwarded_proto_snippet}"
     fi
 }
 
+prepare_wordpress_core_files() {
+    cd /var/www/html
+
+    if [ ! -e index.php ] || [ ! -e wp-includes/version.php ]; then
+        log "Copying WordPress core files"
+        tar --create --file - --directory /usr/src/wordpress --exclude='./wp-content' . | tar --extract --file - --directory /var/www/html
+        chown -R www-data:www-data /var/www/html
+    fi
+}
+
+prepare_wordpress_config() {
+    local wp_config_docker
+
+    if [ -s /var/www/html/wp-config.php ]; then
+        return
+    fi
+
+    for wp_config_docker in /var/www/html/wp-config-docker.php /usr/src/wordpress/wp-config-docker.php; do
+        if [ -s "${wp_config_docker}" ]; then
+            log "Creating wp-config.php from ${wp_config_docker}"
+            awk '
+                /put your unique phrase here/ {
+                    cmd = "head -c1m /dev/urandom | sha1sum | cut -d\\  -f1"
+                    cmd | getline str
+                    close(cmd)
+                    gsub("put your unique phrase here", str)
+                }
+                { print }
+            ' "${wp_config_docker}" >/var/www/html/wp-config.php
+            chown www-data:www-data /var/www/html/wp-config.php || true
+            return
+        fi
+    done
+
+    log "Unable to locate wp-config-docker.php"
+    exit 1
+}
+
+resolve_wordpress_install_settings() {
+    : "${WORDPRESS_SITE_URL:=${RENDER_EXTERNAL_URL:-http://127.0.0.1:${PORT}}}"
+    : "${WORDPRESS_SITE_TITLE:=${RENDER_SERVICE_NAME:-WordPress}}"
+    : "${WORDPRESS_ADMIN_USER:=admin}"
+
+    if [ -z "${WORDPRESS_ADMIN_EMAIL:-}" ]; then
+        if [ -n "${RENDER_EXTERNAL_HOSTNAME:-}" ]; then
+            WORDPRESS_ADMIN_EMAIL="admin@${RENDER_EXTERNAL_HOSTNAME}"
+        else
+            WORDPRESS_ADMIN_EMAIL="admin@example.com"
+        fi
+    fi
+
+    if [ -n "${WORDPRESS_ADMIN_PASSWORD:-}" ]; then
+        ADMIN_PASSWORD_SOURCE="env"
+    elif [ -s "${WORDPRESS_ADMIN_PASSWORD_FILE}" ]; then
+        WORDPRESS_ADMIN_PASSWORD="$(cat "${WORDPRESS_ADMIN_PASSWORD_FILE}")"
+        ADMIN_PASSWORD_SOURCE="file"
+    else
+        WORDPRESS_ADMIN_PASSWORD="$(generate_password)"
+        ADMIN_PASSWORD_SOURCE="generated"
+        printf '%s\n' "${WORDPRESS_ADMIN_PASSWORD}" >"${WORDPRESS_ADMIN_PASSWORD_FILE}"
+        chmod 600 "${WORDPRESS_ADMIN_PASSWORD_FILE}"
+        chown www-data:www-data "${WORDPRESS_ADMIN_PASSWORD_FILE}"
+    fi
+
+    export WORDPRESS_SITE_URL
+    export WORDPRESS_SITE_TITLE
+    export WORDPRESS_ADMIN_USER
+    export WORDPRESS_ADMIN_EMAIL
+    export WORDPRESS_ADMIN_PASSWORD
+    export ADMIN_PASSWORD_SOURCE
+}
+
+wp_cli() {
+    wp --allow-root --path=/var/www/html "$@"
+}
+
+auto_install_wordpress() {
+    if wp_cli core is-installed >/dev/null 2>&1; then
+        return
+    fi
+
+    resolve_wordpress_install_settings
+
+    log "Installing WordPress"
+    wp_cli core install \
+        --url="${WORDPRESS_SITE_URL}" \
+        --title="${WORDPRESS_SITE_TITLE}" \
+        --admin_user="${WORDPRESS_ADMIN_USER}" \
+        --admin_password="${WORDPRESS_ADMIN_PASSWORD}" \
+        --admin_email="${WORDPRESS_ADMIN_EMAIL}" \
+        --skip-email
+
+    log "WordPress admin username: ${WORDPRESS_ADMIN_USER}"
+    log "WordPress admin password (${ADMIN_PASSWORD_SOURCE}): ${WORDPRESS_ADMIN_PASSWORD}"
+    log "WordPress admin login: ${WORDPRESS_SITE_URL%/}/wp-admin/"
+}
+
 : "${PORT:=80}"
 : "${APP_DATA_DIR:=/var/lib/abbeylodge}"
 : "${MYSQL_DATABASE:=wordpress}"
@@ -143,6 +244,7 @@ MYSQL_DATA_DIR="${APP_DATA_DIR}/mysql"
 WP_CONTENT_DIR="${APP_DATA_DIR}/wp-content"
 MYSQL_SOCKET="/run/mysqld/mysqld.sock"
 MYSQL_INIT_MARKER="${MYSQL_DATA_DIR}/.wordpress-bootstrap-initialized"
+WORDPRESS_ADMIN_PASSWORD_FILE="${APP_DATA_DIR}/wordpress-admin-password"
 
 export PORT
 export APP_DATA_DIR
@@ -165,5 +267,9 @@ if use_local_mysql; then
 else
     log "Using external database host ${WORDPRESS_DB_HOST}; skipping local MySQL startup"
 fi
+
+prepare_wordpress_core_files
+prepare_wordpress_config
+auto_install_wordpress
 
 exec /usr/local/bin/docker-entrypoint.sh "$@"

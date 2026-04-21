@@ -20,6 +20,14 @@ services:
         generateValue: true
       - key: WORDPRESS_DB_HOST
         value: 127.0.0.1:3306
+      - key: WORDPRESS_SITE_TITLE
+        value: Abbey Lodge WordPress
+      - key: WORDPRESS_ADMIN_USER
+        value: admin
+      - key: WORDPRESS_ADMIN_EMAIL
+        value: admin@example.com
+      - key: WORDPRESS_ADMIN_PASSWORD
+        generateValue: true
     disk:
       name: wordpress-data
       mountPath: /var/data
