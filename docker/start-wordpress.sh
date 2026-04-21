@@ -330,4 +330,27 @@ prepare_wordpress_config
 auto_install_wordpress
 sync_wordpress_site_url
 
+# ---- MotoPress Hotel Booking Lite -------------------------------------------
+# Install from wp.org if not already present, then activate.
+# Set MPHB_AUTO_INSTALL=0 to skip automatic installation.
+if [[ "${MPHB_AUTO_INSTALL:-1}" == "1" ]]; then
+    if ! wp_cli plugin is-installed motopress-hotel-booking-lite 2>/dev/null; then
+        log "Installing MotoPress Hotel Booking Lite from wp.org"
+        wp_cli plugin install motopress-hotel-booking-lite || \
+            log "WARN: failed to install motopress-hotel-booking-lite"
+    fi
+
+    if wp_cli plugin is-installed motopress-hotel-booking-lite 2>/dev/null \
+       && ! wp_cli plugin is-active motopress-hotel-booking-lite 2>/dev/null; then
+        log "Activating plugin: motopress-hotel-booking-lite"
+        wp_cli plugin activate motopress-hotel-booking-lite || \
+            log "WARN: could not activate motopress-hotel-booking-lite"
+    fi
+fi
+
+# ---- Seed rooms, rates, and seasons ----------------------------------------
+if [ -f /usr/local/bin/seed-rooms.sh ]; then
+    /usr/local/bin/seed-rooms.sh
+fi
+
 exec /usr/local/bin/docker-entrypoint.sh "$@"

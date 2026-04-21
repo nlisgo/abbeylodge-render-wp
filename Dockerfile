@@ -7,8 +7,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/start-wordpress.sh /usr/local/bin/start-wordpress.sh
+COPY docker/seed-rooms.sh /usr/local/bin/seed-rooms.sh
 
-RUN chmod +x /usr/local/bin/start-wordpress.sh
+RUN chmod +x /usr/local/bin/start-wordpress.sh /usr/local/bin/seed-rooms.sh
 
 EXPOSE 80
 
