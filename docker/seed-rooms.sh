@@ -162,6 +162,14 @@ CONFIRMATION_ID=$(create_page \
     "Booking Confirmed" "booking-confirmed" \
     '[mphb_booking_confirmation]')
 
+# ---- Homepage with booking search form --------------------------------------
+HOME_ID=$(create_page "Home" "home" \
+    '<!-- wp:heading {"level":2} --><h2>Find Your Perfect Room</h2><!-- /wp:heading --><!-- wp:shortcode -->[mphb_availability_search]<!-- /wp:shortcode -->')
+
+${WP} option update show_on_front page
+${WP} option update page_on_front "${HOME_ID}"
+log "Static homepage set with availability search form."
+
 # ---- MPHB page settings -----------------------------------------------------
 # Tell MotoPress which pages serve each role in the booking flow.
 ${WP} eval "
