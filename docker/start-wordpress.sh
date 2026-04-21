@@ -31,8 +31,9 @@ configure_apache_port() {
 prepare_wordpress_storage() {
     mkdir -p "${APP_DATA_DIR}" "${MYSQL_DATA_DIR}" "${WP_CONTENT_DIR}" /run/mysqld
 
-    if [ -d /var/www/html/wp-content ] && [ -z "$(find "${WP_CONTENT_DIR}" -mindepth 1 -print -quit 2>/dev/null)" ]; then
-        cp -a /var/www/html/wp-content/. "${WP_CONTENT_DIR}/"
+    # Backfill default themes/plugins from the image without overwriting persisted content.
+    if [ -d /usr/src/wordpress/wp-content ]; then
+        cp -an /usr/src/wordpress/wp-content/. "${WP_CONTENT_DIR}/"
     fi
 
     rm -rf /var/www/html/wp-content
