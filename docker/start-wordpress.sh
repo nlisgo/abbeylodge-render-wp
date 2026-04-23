@@ -45,8 +45,12 @@ prepare_wordpress_storage() {
 
 wait_for_mysql() {
     local tries=60
+    local auth=()
+    if [ -n "${MYSQL_ROOT_PASSWORD:-}" ]; then
+        auth=(-uroot -p"${MYSQL_ROOT_PASSWORD}")
+    fi
 
-    until mysqladmin --protocol=socket --socket="${MYSQL_SOCKET}" ping >/dev/null 2>&1; do
+    until mysqladmin --protocol=socket --socket="${MYSQL_SOCKET}" "${auth[@]}" ping >/dev/null 2>&1; do
         tries=$((tries - 1))
         if [ "${tries}" -le 0 ]; then
             log "MySQL did not become ready in time"
