@@ -72,7 +72,8 @@ start_local_mysql() {
         --datadir="${MYSQL_DATA_DIR}" \
         --bind-address=127.0.0.1 \
         --port=3306 \
-        --socket="${MYSQL_SOCKET}" &
+        --socket="${MYSQL_SOCKET}" \
+        --log-warnings=1 &
     MYSQL_PID=$!
 
     trap 'if [ -n "${MYSQL_PID:-}" ] && kill -0 "${MYSQL_PID}" 2>/dev/null; then kill -TERM "${MYSQL_PID}"; wait "${MYSQL_PID}" || true; fi' EXIT
