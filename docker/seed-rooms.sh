@@ -162,13 +162,76 @@ CONFIRMATION_ID=$(create_page \
     "Booking Confirmed" "booking-confirmed" \
     '[mphb_booking_confirmation]')
 
-# ---- Homepage with booking search form --------------------------------------
-HOME_ID=$(create_page "Home" "home" \
-    '<!-- wp:heading {"level":2} --><h2>Find Your Perfect Room</h2><!-- /wp:heading --><!-- wp:shortcode -->[mphb_availability_search]<!-- /wp:shortcode -->')
+# ---- Homepage with hero, search form, and about section --------------------
+read -r -d '' HOME_CONTENT << 'GUTENBERG' || true
+<!-- wp:cover {"overlayColor":"#1e293b","customOverlayColor":"#1e293b","minHeight":420,"isDark":true,"style":{"spacing":{"padding":{"top":"80px","bottom":"80px"}}}} -->
+<div class="wp-block-cover is-dark" style="padding-top:80px;padding-bottom:80px;min-height:420px"><span aria-hidden="true" class="wp-block-cover__background has-background-dim-100 has-background-dim" style="background-color:#1e293b"></span><div class="wp-block-cover__inner-container"><!-- wp:heading {"textAlign":"center","level":1,"style":{"typography":{"fontSize":"48px","fontWeight":"700"},"color":{"text":"#ffffff"}}} -->
+<h1 class="wp-block-heading has-text-align-center has-text-color" style="color:#ffffff;font-size:48px;font-weight:700">Abbey Lodge Hotel</h1>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"20px"},"color":{"text":"#cbd5e1"}}} -->
+<p class="has-text-align-center has-text-color" style="color:#cbd5e1;font-size:20px">Comfortable rooms in the heart of the city</p>
+<!-- /wp:paragraph --></div></div>
+<!-- /wp:cover -->
+
+<!-- wp:group {"style":{"spacing":{"padding":{"top":"60px","bottom":"60px","left":"20px","right":"20px"}}},"layout":{"type":"constrained","contentSize":"720px"}} -->
+<div class="wp-block-group" style="padding-top:60px;padding-bottom:60px;padding-left:20px;padding-right:20px"><!-- wp:heading {"textAlign":"center","level":2,"style":{"typography":{"fontSize":"32px","fontWeight":"600"},"color":{"text":"#1e293b"}}} -->
+<h2 class="wp-block-heading has-text-align-center has-text-color" style="color:#1e293b;font-size:32px;font-weight:600">Check Availability</h2>
+<!-- /wp:heading -->
+
+<!-- wp:shortcode -->
+[mphb_availability_search]
+<!-- /wp:shortcode --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"style":{"color":{"background":"#f8fafc"},"spacing":{"padding":{"top":"60px","bottom":"60px","left":"20px","right":"20px"}}},"layout":{"type":"constrained","contentSize":"960px"}} -->
+<div class="wp-block-group has-background" style="background-color:#f8fafc;padding-top:60px;padding-bottom:60px;padding-left:20px;padding-right:20px"><!-- wp:heading {"textAlign":"center","level":2,"style":{"typography":{"fontSize":"32px","fontWeight":"600"},"color":{"text":"#1e293b"}}} -->
+<h2 class="wp-block-heading has-text-align-center has-text-color" style="color:#1e293b;font-size:32px;font-weight:600">Welcome to Abbey Lodge</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"18px"},"color":{"text":"#475569"}}} -->
+<p class="has-text-align-center has-text-color" style="color:#475569;font-size:18px">Situated in the heart of the city, Abbey Lodge Hotel offers comfortable accommodation at affordable prices. Whether you are visiting for business or leisure, our friendly team is here to make your stay memorable.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"30px"},"margin":{"top":"40px"}}}} -->
+<div class="wp-block-columns" style="margin-top:40px"><!-- wp:column {"style":{"border":{"radius":"8px"},"spacing":{"padding":{"top":"30px","bottom":"30px","left":"20px","right":"20px"}},"color":{"background":"#ffffff"}}} -->
+<div class="wp-block-column has-background" style="border-radius:8px;background-color:#ffffff;padding-top:30px;padding-bottom:30px;padding-left:20px;padding-right:20px"><!-- wp:heading {"textAlign":"center","level":3,"style":{"typography":{"fontSize":"36px","fontWeight":"700"},"color":{"text":"#b45309"}}} -->
+<h3 class="wp-block-heading has-text-align-center has-text-color" style="color:#b45309;font-size:36px;font-weight:700">35</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"16px","fontWeight":"600"},"color":{"text":"#334155"}}} -->
+<p class="has-text-align-center has-text-color" style="color:#334155;font-size:16px;font-weight:600">Rooms</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"style":{"border":{"radius":"8px"},"spacing":{"padding":{"top":"30px","bottom":"30px","left":"20px","right":"20px"}},"color":{"background":"#ffffff"}}} -->
+<div class="wp-block-column has-background" style="border-radius:8px;background-color:#ffffff;padding-top:30px;padding-bottom:30px;padding-left:20px;padding-right:20px"><!-- wp:heading {"textAlign":"center","level":3,"style":{"typography":{"fontSize":"36px","fontWeight":"700"},"color":{"text":"#b45309"}}} -->
+<h3 class="wp-block-heading has-text-align-center has-text-color" style="color:#b45309;font-size:36px;font-weight:700">Central</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"16px","fontWeight":"600"},"color":{"text":"#334155"}}} -->
+<p class="has-text-align-center has-text-color" style="color:#334155;font-size:16px;font-weight:600">Location</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"style":{"border":{"radius":"8px"},"spacing":{"padding":{"top":"30px","bottom":"30px","left":"20px","right":"20px"}},"color":{"background":"#ffffff"}}} -->
+<div class="wp-block-column has-background" style="border-radius:8px;background-color:#ffffff;padding-top:30px;padding-bottom:30px;padding-left:20px;padding-right:20px"><!-- wp:heading {"textAlign":"center","level":3,"style":{"typography":{"fontSize":"36px","fontWeight":"700"},"color":{"text":"#b45309"}}} -->
+<h3 class="wp-block-heading has-text-align-center has-text-color" style="color:#b45309;font-size:36px;font-weight:700">£79</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"16px","fontWeight":"600"},"color":{"text":"#334155"}}} -->
+<p class="has-text-align-center has-text-color" style="color:#334155;font-size:16px;font-weight:600">Per Night</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns --></div>
+<!-- /wp:group -->
+GUTENBERG
+
+HOME_ID=$(create_page "Home" "home" "${HOME_CONTENT}")
 
 ${WP} option update show_on_front page
 ${WP} option update page_on_front "${HOME_ID}"
-log "Static homepage set with availability search form."
+log "Static homepage set with hero, search form, and about section."
 
 # ---- MPHB page settings -----------------------------------------------------
 # Tell MotoPress which pages serve each role in the booking flow.

@@ -21,7 +21,7 @@ services:
       - key: WORDPRESS_DB_HOST
         value: 127.0.0.1:3306
       - key: WORDPRESS_SITE_TITLE
-        value: Abbey Lodge WordPress
+        value: Abbey Lodge Hotel
       - key: WORDPRESS_ADMIN_USER
         value: admin
       - key: WORDPRESS_ADMIN_EMAIL

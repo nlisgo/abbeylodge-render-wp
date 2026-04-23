@@ -430,4 +430,9 @@ if [ -f /usr/local/bin/seed-rooms.sh ]; then
     /usr/local/bin/seed-rooms.sh
 fi
 
+# ---- Site branding and custom CSS -----------------------------------------
+if [ -f /usr/local/bin/style-site.sh ]; then
+    /usr/local/bin/style-site.sh
+fi
+
 exec /usr/local/bin/docker-entrypoint.sh "$@"
