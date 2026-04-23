@@ -100,6 +100,12 @@ SQL
 
     touch "${MYSQL_INIT_MARKER}"
     chown mysql:mysql "${MYSQL_INIT_MARKER}"
+
+    printf '%s\n' "${MYSQL_PASSWORD}" >"${MYSQL_PASSWORD_FILE}"
+    chmod 600 "${MYSQL_PASSWORD_FILE}"
+    printf '%s\n' "${MYSQL_ROOT_PASSWORD}" >"${MYSQL_ROOT_PASSWORD_FILE}"
+    chmod 600 "${MYSQL_ROOT_PASSWORD_FILE}"
+    log "Persisted MySQL passwords to disk"
 }
 
 use_local_mysql() {
@@ -111,6 +117,25 @@ use_local_mysql() {
             return 1
             ;;
     esac
+}
+
+load_persisted_passwords() {
+    if [ ! -f "${MYSQL_INIT_MARKER}" ]; then
+        return
+    fi
+
+    if [ -s "${MYSQL_PASSWORD_FILE}" ]; then
+        MYSQL_PASSWORD="$(cat "${MYSQL_PASSWORD_FILE}")"
+        WORDPRESS_DB_PASSWORD="${MYSQL_PASSWORD}"
+        export MYSQL_PASSWORD WORDPRESS_DB_PASSWORD
+        log "Loaded MySQL user password from persistent storage"
+    fi
+
+    if [ -s "${MYSQL_ROOT_PASSWORD_FILE}" ]; then
+        MYSQL_ROOT_PASSWORD="$(cat "${MYSQL_ROOT_PASSWORD_FILE}")"
+        export MYSQL_ROOT_PASSWORD
+        log "Loaded MySQL root password from persistent storage"
+    fi
 }
 
 ensure_proxy_https_support() {
@@ -150,6 +175,13 @@ prepare_wordpress_config() {
         return
     fi
 
+    if [ -s "${WP_CONFIG_PERSISTENT}" ]; then
+        log "Restoring wp-config.php from persistent storage"
+        cp "${WP_CONFIG_PERSISTENT}" /var/www/html/wp-config.php
+        chown www-data:www-data /var/www/html/wp-config.php || true
+        return
+    fi
+
     for wp_config_docker in /var/www/html/wp-config-docker.php /usr/src/wordpress/wp-config-docker.php; do
         if [ -s "${wp_config_docker}" ]; then
             log "Creating wp-config.php from ${wp_config_docker}"
@@ -163,6 +195,8 @@ prepare_wordpress_config() {
                 { print }
             ' "${wp_config_docker}" >/var/www/html/wp-config.php
             chown www-data:www-data /var/www/html/wp-config.php || true
+            cp /var/www/html/wp-config.php "${WP_CONFIG_PERSISTENT}"
+            log "Persisted wp-config.php to disk"
             return
         fi
     done
@@ -302,6 +336,9 @@ WP_CONTENT_DIR="${APP_DATA_DIR}/wp-content"
 MYSQL_SOCKET="/run/mysqld/mysqld.sock"
 MYSQL_INIT_MARKER="${MYSQL_DATA_DIR}/.wordpress-bootstrap-initialized"
 WORDPRESS_ADMIN_PASSWORD_FILE="${APP_DATA_DIR}/wordpress-admin-password"
+MYSQL_PASSWORD_FILE="${APP_DATA_DIR}/mysql-password"
+MYSQL_ROOT_PASSWORD_FILE="${APP_DATA_DIR}/mysql-root-password"
+WP_CONFIG_PERSISTENT="${APP_DATA_DIR}/wp-config.php"
 
 export PORT
 export APP_DATA_DIR
@@ -317,6 +354,7 @@ export WORDPRESS_DB_PASSWORD
 configure_apache_port
 prepare_wordpress_storage
 ensure_proxy_https_support
+load_persisted_passwords
 
 if use_local_mysql; then
     start_local_mysql
