@@ -386,6 +386,40 @@ if [[ "${MPHB_AUTO_INSTALL:-1}" == "1" ]]; then
     fi
 fi
 
+# ---- Elementor Page Builder --------------------------------------------------
+if [[ "${ELEMENTOR_AUTO_INSTALL:-1}" == "1" ]]; then
+    if ! wp_cli plugin is-installed elementor 2>/dev/null; then
+        log "Installing Elementor from wp.org"
+        wp_cli plugin install elementor || \
+            log "WARN: failed to install elementor"
+    fi
+
+    if wp_cli plugin is-installed elementor 2>/dev/null \
+       && ! wp_cli plugin is-active elementor 2>/dev/null; then
+        log "Activating plugin: elementor"
+        wp_cli plugin activate elementor || \
+            log "WARN: could not activate elementor"
+    fi
+fi
+
+# ---- Hello Elementor Theme ---------------------------------------------------
+if [[ "${HELLO_ELEMENTOR_AUTO_INSTALL:-1}" == "1" ]]; then
+    if ! wp_cli theme is-installed hello-elementor 2>/dev/null; then
+        log "Installing Hello Elementor theme from wp.org"
+        wp_cli theme install hello-elementor || \
+            log "WARN: failed to install hello-elementor"
+    fi
+
+    if wp_cli theme is-installed hello-elementor 2>/dev/null; then
+        local_active_theme="$(wp_cli theme list --status=active --field=name 2>/dev/null || true)"
+        if [ "${local_active_theme}" != "hello-elementor" ]; then
+            log "Activating theme: hello-elementor"
+            wp_cli theme activate hello-elementor || \
+                log "WARN: could not activate hello-elementor"
+        fi
+    fi
+fi
+
 # ---- Seed rooms, rates, and seasons ----------------------------------------
 if [ -f /usr/local/bin/seed-rooms.sh ]; then
     /usr/local/bin/seed-rooms.sh
