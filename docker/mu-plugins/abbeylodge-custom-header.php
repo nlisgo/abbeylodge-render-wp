@@ -10,9 +10,9 @@ add_filter('hello_elementor_header_footer', '__return_false');
 // Inject custom header HTML right after <body>.
 add_action('wp_body_open', function () {
     $home_url = esc_url(home_url('/'));
-    $phone    = '+44 1234 567890';
-    $phone_href = 'tel:+441234567890';
-    $address  = '123 High Street, London, W1A 1AB';
+    $phone    = '+44 (0)1274 583-854';
+    $phone_href = 'tel:+441274583854';
+    $address  = '62 Kirkgate, Shipley, West Yorkshire, BD18 3EL';
     ?>
     <header class="abbeylodge-header" role="banner">
         <div class="abbeylodge-header__inner">
