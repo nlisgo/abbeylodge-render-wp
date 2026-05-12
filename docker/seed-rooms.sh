@@ -87,8 +87,8 @@ log "  Saturday season #${SATURDAY_SEASON_ID} created."
 # Inventory table:
 #   Type              Adults  Children  Bed     Count  Price(£/night)  Sun(£)  Sat(£)
 #   Single            1       0         Single  4      79              75      —
-#   Double            2       0         Double  15     89              —       99
-#   Twin              2       0         Twin    6      89              —       99
+#   Double            2       0         Double  15     89              85      99
+#   Twin              2       0         Twin    6      89              85      99
 #   Superior Double   2       0         Double  10     99              —       110
 #
 create_room_type() {
@@ -185,8 +185,8 @@ create_room_type() {
 }
 
 create_room_type "Single"           1 0 "Single" 4  79 75
-create_room_type "Double"           2 0 "Double" 15 89 "" 99
-create_room_type "Twin"             2 0 "Twin"   6  89 "" 99
+create_room_type "Double"           2 0 "Double" 15 89 85 99
+create_room_type "Twin"             2 0 "Twin"   6  89 85 99
 create_room_type "Superior Double"  2 0 "Double" 10 99 "" 110
 
 # ---- Currency ----------------------------------------------------------------
