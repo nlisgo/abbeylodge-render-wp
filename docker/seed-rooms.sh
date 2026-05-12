@@ -50,17 +50,34 @@ ${WP} eval "update_post_meta(${SEASON_ID}, 'mphb_days', array(0,1,2,3,4,5,6));"
 
 log "  Season #${SEASON_ID} created."
 
+# ---- Sunday season -----------------------------------------------------------
+log "Creating Sunday season (2026-01-01 → 2099-12-31, Sundays only)..."
+SUNDAY_SEASON_ID=$(${WP} post create \
+    --post_type=mphb_season \
+    --post_title="Sunday" \
+    --post_status=publish \
+    --porcelain)
+
+${WP} post meta update "${SUNDAY_SEASON_ID}" mphb_start_date "2026-01-01"
+${WP} post meta update "${SUNDAY_SEASON_ID}" mphb_end_date   "2099-12-31"
+
+# mphb_days: only Sunday (0)
+${WP} eval "update_post_meta(${SUNDAY_SEASON_ID}, 'mphb_days', array(0));"
+
+log "  Sunday season #${SUNDAY_SEASON_ID} created."
+
 # ---- Room types, rooms, and rates -------------------------------------------
 #
 # Inventory table:
-#   Type              Adults  Children  Bed     Count  Price(£/night)
-#   Single            1       0         Single  4      79
+#   Type              Adults  Children  Bed     Count  Price(£/night)  Sun(£)
+#   Single            1       0         Single  4      79              75
 #   Double            2       0         Double  15     89
 #   Twin              2       0         Twin    6      89
 #   Superior Double   2       0         Double  10     99
 #
 create_room_type() {
     local title="$1" adults="$2" children="$3" bed="$4" count="$5" price="$6"
+    local sunday_price="${7:-}"
 
     log "Creating room type: ${title} (×${count}, £${price}/night)..."
 
@@ -104,22 +121,45 @@ create_room_type() {
 
     # mphb_season_prices is a nested PHP array:
     #   array( array( 'season' => <id>, 'price' => array( 'periods' => array(...), 'prices' => array(...) ) ) )
-    ${WP} eval "
-        update_post_meta(${rate_id}, 'mphb_season_prices', array(
-            array(
-                'season'  => ${SEASON_ID},
-                'price'   => array(
-                    'periods' => array(1),
-                    'prices'  => array(${price}.00),
+    # When a sunday_price is provided, the Sunday season entry is listed first
+    # so it takes priority on Sundays; the Default season covers all other days.
+    if [[ -n "${sunday_price}" ]]; then
+        ${WP} eval "
+            update_post_meta(${rate_id}, 'mphb_season_prices', array(
+                array(
+                    'season'  => ${SUNDAY_SEASON_ID},
+                    'price'   => array(
+                        'periods' => array(1),
+                        'prices'  => array(${sunday_price}.00),
+                    ),
                 ),
-            ),
-        ));
-    "
-
-    log "  Rate #${rate_id} created."
+                array(
+                    'season'  => ${SEASON_ID},
+                    'price'   => array(
+                        'periods' => array(1),
+                        'prices'  => array(${price}.00),
+                    ),
+                ),
+            ));
+        "
+        log "  Rate #${rate_id} created (£${sunday_price} on Sundays)."
+    else
+        ${WP} eval "
+            update_post_meta(${rate_id}, 'mphb_season_prices', array(
+                array(
+                    'season'  => ${SEASON_ID},
+                    'price'   => array(
+                        'periods' => array(1),
+                        'prices'  => array(${price}.00),
+                    ),
+                ),
+            ));
+        "
+        log "  Rate #${rate_id} created."
+    fi
 }
 
-create_room_type "Single"           1 0 "Single" 4  79
+create_room_type "Single"           1 0 "Single" 4  79 75
 create_room_type "Double"           2 0 "Double" 15 89
 create_room_type "Twin"             2 0 "Twin"   6  89
 create_room_type "Superior Double"  2 0 "Double" 10 99
