@@ -435,4 +435,10 @@ if [ -f /usr/local/bin/style-site.sh ]; then
     /usr/local/bin/style-site.sh
 fi
 
+# ---- Fix wp-content ownership ------------------------------------------------
+# Plugin installs and seed scripts run as root, which can leave files/dirs
+# inside wp-content owned by root. Re-chown so Apache (www-data) can create
+# uploads and other runtime directories.
+chown -R www-data:www-data "${WP_CONTENT_DIR}"
+
 exec /usr/local/bin/docker-entrypoint.sh "$@"
