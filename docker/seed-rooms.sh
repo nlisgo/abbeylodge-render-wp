@@ -66,18 +66,34 @@ ${WP} eval "update_post_meta(${SUNDAY_SEASON_ID}, 'mphb_days', array(0));"
 
 log "  Sunday season #${SUNDAY_SEASON_ID} created."
 
+# ---- Saturday season ---------------------------------------------------------
+log "Creating Saturday season (2026-01-01 → 2099-12-31, Saturdays only)..."
+SATURDAY_SEASON_ID=$(${WP} post create \
+    --post_type=mphb_season \
+    --post_title="Saturday" \
+    --post_status=publish \
+    --porcelain)
+
+${WP} post meta update "${SATURDAY_SEASON_ID}" mphb_start_date "2026-01-01"
+${WP} post meta update "${SATURDAY_SEASON_ID}" mphb_end_date   "2099-12-31"
+
+# mphb_days: only Saturday (6)
+${WP} eval "update_post_meta(${SATURDAY_SEASON_ID}, 'mphb_days', array(6));"
+
+log "  Saturday season #${SATURDAY_SEASON_ID} created."
+
 # ---- Room types, rooms, and rates -------------------------------------------
 #
 # Inventory table:
-#   Type              Adults  Children  Bed     Count  Price(£/night)  Sun(£)
-#   Single            1       0         Single  4      79              75
-#   Double            2       0         Double  15     89
-#   Twin              2       0         Twin    6      89
-#   Superior Double   2       0         Double  10     99
+#   Type              Adults  Children  Bed     Count  Price(£/night)  Sun(£)  Sat(£)
+#   Single            1       0         Single  4      79              75      —
+#   Double            2       0         Double  15     89              —       99
+#   Twin              2       0         Twin    6      89              —       99
+#   Superior Double   2       0         Double  10     99              —       110
 #
 create_room_type() {
     local title="$1" adults="$2" children="$3" bed="$4" count="$5" price="$6"
-    local sunday_price="${7:-}"
+    local sunday_price="${7:-}" saturday_price="${8:-}"
 
     log "Creating room type: ${title} (×${count}, £${price}/night)..."
 
@@ -121,48 +137,57 @@ create_room_type() {
 
     # mphb_season_prices is a nested PHP array:
     #   array( array( 'season' => <id>, 'price' => array( 'periods' => array(...), 'prices' => array(...) ) ) )
-    # When a sunday_price is provided, the Sunday season entry is listed first
-    # so it takes priority on Sundays; the Default season covers all other days.
+    # Day-specific season entries are listed before the Default season so they
+    # take priority; the Default season covers all remaining days.
+    local php_entries=""
     if [[ -n "${sunday_price}" ]]; then
-        ${WP} eval "
-            update_post_meta(${rate_id}, 'mphb_season_prices', array(
+        php_entries+="
                 array(
                     'season'  => ${SUNDAY_SEASON_ID},
                     'price'   => array(
                         'periods' => array(1),
                         'prices'  => array(${sunday_price}.00),
                     ),
-                ),
+                ),"
+    fi
+    if [[ -n "${saturday_price}" ]]; then
+        php_entries+="
+                array(
+                    'season'  => ${SATURDAY_SEASON_ID},
+                    'price'   => array(
+                        'periods' => array(1),
+                        'prices'  => array(${saturday_price}.00),
+                    ),
+                ),"
+    fi
+    php_entries+="
                 array(
                     'season'  => ${SEASON_ID},
                     'price'   => array(
                         'periods' => array(1),
                         'prices'  => array(${price}.00),
                     ),
-                ),
-            ));
-        "
-        log "  Rate #${rate_id} created (£${sunday_price} on Sundays)."
+                ),"
+
+    ${WP} eval "
+        update_post_meta(${rate_id}, 'mphb_season_prices', array(${php_entries}
+        ));
+    "
+
+    local overrides=""
+    [[ -n "${sunday_price}" ]]   && overrides+="£${sunday_price} Sun"
+    [[ -n "${saturday_price}" ]] && { [[ -n "${overrides}" ]] && overrides+=", "; overrides+="£${saturday_price} Sat"; }
+    if [[ -n "${overrides}" ]]; then
+        log "  Rate #${rate_id} created (${overrides})."
     else
-        ${WP} eval "
-            update_post_meta(${rate_id}, 'mphb_season_prices', array(
-                array(
-                    'season'  => ${SEASON_ID},
-                    'price'   => array(
-                        'periods' => array(1),
-                        'prices'  => array(${price}.00),
-                    ),
-                ),
-            ));
-        "
         log "  Rate #${rate_id} created."
     fi
 }
 
 create_room_type "Single"           1 0 "Single" 4  79 75
-create_room_type "Double"           2 0 "Double" 15 89
-create_room_type "Twin"             2 0 "Twin"   6  89
-create_room_type "Superior Double"  2 0 "Double" 10 99
+create_room_type "Double"           2 0 "Double" 15 89 "" 99
+create_room_type "Twin"             2 0 "Twin"   6  89 "" 99
+create_room_type "Superior Double"  2 0 "Double" 10 99 "" 110
 
 # ---- Currency ----------------------------------------------------------------
 ${WP} eval "update_option('mphb_currency_symbol', 'GBP');"
