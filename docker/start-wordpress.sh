@@ -425,6 +425,13 @@ if [[ "${HELLO_ELEMENTOR_AUTO_INSTALL:-1}" == "1" ]]; then
     fi
 fi
 
+# ---- Must-use plugins ------------------------------------------------------
+if [ -f /usr/local/bin/abbeylodge-custom-header.php ]; then
+    mkdir -p "${WP_CONTENT_DIR}/mu-plugins"
+    cp /usr/local/bin/abbeylodge-custom-header.php "${WP_CONTENT_DIR}/mu-plugins/abbeylodge-custom-header.php"
+    log "Installed mu-plugin: abbeylodge-custom-header.php"
+fi
+
 # ---- Seed rooms, rates, and seasons ----------------------------------------
 if [ -f /usr/local/bin/seed-rooms.sh ]; then
     /usr/local/bin/seed-rooms.sh

@@ -39,30 +39,70 @@ body {
     color: #334155;
 }
 
-/* --- Header ------------------------------------------------------------- */
-header.site-header,
-.site-header {
-    background-color: #1e293b !important;
+/* --- Custom header ------------------------------------------------------ */
+.abbeylodge-header {
+    background-color: #1e293b;
     border-bottom: 3px solid #b45309;
+    padding: 16px 24px;
 }
 
-.site-header .site-title,
-.site-header .site-title a {
-    color: #ffffff !important;
+.abbeylodge-header__inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.abbeylodge-header__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.abbeylodge-header__title a {
+    color: #ffffff;
     text-decoration: none;
 }
 
-.site-header .site-description,
-.site-header .site-tagline {
-    color: #94a3b8 !important;
+.abbeylodge-header__title a:hover {
+    color: #b45309;
 }
 
-.site-header a {
-    color: #e2e8f0 !important;
+.abbeylodge-header__contact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
 }
 
-.site-header a:hover {
-    color: #b45309 !important;
+.abbeylodge-header__phone a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.abbeylodge-header__phone a:hover {
+    color: #b45309;
+}
+
+.abbeylodge-header__address {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .abbeylodge-header__inner {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .abbeylodge-header__contact {
+        align-items: center;
+    }
 }
 
 /* --- Footer ------------------------------------------------------------- */

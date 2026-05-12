@@ -9,6 +9,7 @@ RUN apt-get update \
 COPY docker/start-wordpress.sh /usr/local/bin/start-wordpress.sh
 COPY docker/seed-rooms.sh /usr/local/bin/seed-rooms.sh
 COPY docker/style-site.sh /usr/local/bin/style-site.sh
+COPY docker/mu-plugins/abbeylodge-custom-header.php /usr/local/bin/abbeylodge-custom-header.php
 
 RUN chmod +x /usr/local/bin/start-wordpress.sh /usr/local/bin/seed-rooms.sh /usr/local/bin/style-site.sh
 
